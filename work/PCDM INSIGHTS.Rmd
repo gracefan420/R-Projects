@@ -1,0 +1,162 @@
+---
+title: "pcdm insights"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+library(readr)
+goc <- read_csv("M:/template project docs 3/R2/GOC.csv")
+td <- read_csv("M:/template project docs 3/R2/TD.csv")
+
+goc=data.frame(goc)
+td=data.frame(td)
+```
+
+## Problem and Data set
+Problem: who tend to complete all the GOC questions without timeframe? Or what are the factors/characteristics that these patients have?
+
+An investigation of patients who has complete all GOC/TD questions within the given 90 days timeframe  will be done.
+
+The data set I am using is from the cohort follows the PCDM GOC/TD methodology documents, and excluding those patients who have pcdm submission missingness since none of these subjects are going to contribute our analysis. Some potential factors and cormorbidity conditions are being analysed to see if they has any relation to our outcome.
+
+
+```{r,include=FALSE}
+newgoc=subset(goc,PCDM_missing_flag!=1)
+newtd=subset(td,PCDM_missing_flag!=1)
+
+library(dplyr)
+library(sqldf)
+
+newgoc=sqldf("select GOC_Q3_final_n,age,RaceCD,AnginaCD,MyocardialInfarctCD,CABypassAngioplastyCD,CHFCD,CerebrovascularDiseaseCD,PeripheralVascularDiseaseCD,DiabetesTypeOneCD,DiabetesTypeTwoCD,MalingancyCD,COLDCD,HypertensionCD,OtherIllnessCD,SmokerCD,acd_cen,Size
+        from newgoc") 
+
+newtd=sqldf("select TD_code_status_final_n,age,RaceCD,AnginaCD,MyocardialInfarctCD,CABypassAngioplastyCD,CHFCD,CerebrovascularDiseaseCD,PeripheralVascularDiseaseCD,DiabetesTypeOneCD,DiabetesTypeTwoCD,MalingancyCD,COLDCD,HypertensionCD,OtherIllnessCD,SmokerCD,acd_cen,Size
+        from newtd") 
+
+newgoc1=newgoc[complete.cases(newgoc), ]
+newtd1=newtd[complete.cases(newtd), ]
+
+
+
+```
+
+Below is a summary of the GOC datasets. The age ranges from 18.01 to 97.56 with mean/meandian around 68/66.
+
+RaceCD are coded as 1 for Caucasian, 2 for Asian/Oriental, 3 for Black, 5 for Indian Sub-Continent, 8 Pacific Islander, 9 for Native American/Aboriginal, 10 for Mid-East/Arabian, 11 for Latin American, 12 for African Origin, 98 for Unknown, 99 Other/Multiracial.
+
+
+and coromorbidities 
+that are we are investigating are 
+AnginaCD 
+MyocardialInfarctCD
+CABypassAngioplastyCD
+CHFCD
+CerebrovascularDiseaseCD
+PeripheralVascularDiseaseCD
+DiabetesTypeOneCD
+DiabetesTypeTwoCD
+MalingancyCD
+COLDCD
+HypertensionCD
+OtherIllnessCD
+SmokerCD 
+acd_cen
+ProgramSize
+
+```{r}
+library(readr)
+summary(newgoc1)
+summary(newtd1)
+```
+
+## full model and preminary analysis
+A logistic classification is being used to calucalted the probabilities of the patients complete all the GOC/TD questions.
+From the below results
+### GOC_Model: acd_cen, and size_M tend to have higher probabilities say yes to all quetsions
+some realtion with MalingancyCD but need further investigation
+
+as.factor(acd_cen)1                     4.00e-06 ***
+as.factor(Size)M                        3.74e-07 ***
+
+## #TD model
+For RaceCD=3, P-value=0.0221, (Black) seems tend to say yes?
+
+```{r pressure, echo=FALSE}
+fit.goc=glm(as.numeric(GOC_Q3_final_n)~age+as.factor(RaceCD)+as.factor(AnginaCD)+as.factor(MyocardialInfarctCD)+as.factor(CABypassAngioplastyCD)+as.factor(CHFCD)+as.factor(CerebrovascularDiseaseCD)+as.factor(PeripheralVascularDiseaseCD)+as.factor(DiabetesTypeOneCD)+as.factor(DiabetesTypeTwoCD)+as.factor(MalingancyCD)+as.factor(COLDCD)+as.factor(HypertensionCD)+as.factor(OtherIllnessCD)+as.factor(SmokerCD)+as.factor(acd_cen)+as.factor(Size),family='binomial',data=newgoc1)
+
+
+fit.td=glm(as.numeric(TD_code_status_final_n)~age+as.factor(RaceCD)+as.factor(AnginaCD)+as.factor(MyocardialInfarctCD)+as.factor(CABypassAngioplastyCD)+as.factor(CHFCD)+as.factor(CerebrovascularDiseaseCD)+as.factor(PeripheralVascularDiseaseCD)+as.factor(DiabetesTypeOneCD)+as.factor(DiabetesTypeTwoCD)+as.factor(MalingancyCD)+as.factor(COLDCD)+as.factor(HypertensionCD)+as.factor(OtherIllnessCD)+as.factor(SmokerCD)+as.factor(acd_cen)+as.factor(Size),family='binomial',data=newtd1)        
+
+```
+
+```{r}
+summary(fit.goc)
+summary(fit.td)
+
+```
+
+## Use stepwise model selection method to choice the best model
+GOC_mod: PeripheralVascularDiseaseCD, HypertensionCD, MalingancyCD, SmokerCD,acd_cen,Size
+TD_mod: SmokerCD, Size
+
+```{r}
+mod_goc1 <- step(fit.goc)
+mod_td1 <- step(fit.td)
+
+```
+
+```{r,echo=FALSE}
+mod_goc2=glm(as.numeric(GOC_Q3_final_n) ~ age + as.factor(PeripheralVascularDiseaseCD) + as.factor(MalingancyCD) + as.factor(HypertensionCD) + as.factor(SmokerCD) + as.factor(acd_cen) + as.factor(Size),family=binomial,data=newgoc1)
+
+mod_td2=glm(as.numeric(TD_code_status_final_n) ~ as.factor(SmokerCD) + as.factor(Size),family=binomial,data=newtd1)
+
+```
+
+```{r}
+summary(mod_goc2)
+summary(mod_td2)
+```
+
+```{r , echo=FALSE}
+library(dplyr)
+library(ggplot2)
+
+newgoc2 <- newgoc1 %>%
+  count(GOC_Q3_final_n, PeripheralVascularDiseaseCD) %>%
+  group_by(PeripheralVascularDiseaseCD) %>% #change to `group_by(Genotypes) %>%` for alternative approach
+  mutate(proportion = n / sum(n))
+
+ggplot(data = newgoc2, aes(as.factor(GOC_Q3_final_n), proportion, fill = PeripheralVascularDiseaseCD)) + 
+  geom_bar(stat = "identity", position = "dodge")
+```
+
+
+
+
+
+
+```{r , echo=FALSE}
+library(pROC)
+prob_goc_full=predict(fit.goc,type=c("response"))
+newgoc1$prob_full=prob_goc_full
+goc_curve_full <- roc(as.numeric(GOC_Q3_final_n) ~ prob_full, data = newgoc1)
+
+prob_goc=predict(mod_goc2,type=c("response"))
+newgoc1$prob=prob_goc
+goc_curve <- roc(as.numeric(GOC_Q3_final_n) ~ prob, data = newgoc1)
+plot(goc_curve, col=rainbow(7), main="ROC curve GOC", xlab="Specificity", 
+     ylab="Sensitivity")
+```
+
+```{r , echo=FALSE}
+library(pROC)
+
+prob_td=predict(mod_td2,type=c("response"))
+newtd1$prob=prob_td
+td_curve <- roc(as.numeric(TD_code_status_final_n) ~ prob, data = newtd1)
+plot(td_curve, col=rainbow(7), main="ROC curve TD", xlab="Specificity", 
+     ylab="Sensitivity")
+
+```

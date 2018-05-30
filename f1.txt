@@ -1,3 +1,36 @@
+github 
+goal:
+
+basic defintion
+Repository
+- save projects codes, each repository map to a project
+- multiple projects has multiple repository
+- private repository is not free
+
+Star (favorites shoucang)
+- store codes to look at next time
+
+Fork (Copy/clone projects)
+-forked from 'Erik'
+
+Pull Request
+merge
+
+watch
+issue
+
+
+github homepage
+repository homepage
+-codes
+-version 
+-star
+-watch
+
+personal webpage
+
+
+
 github instruction start develop a project:
 
 1. start a new project at (click the cat icon) https://github.com/
