@@ -1,1 +1,37 @@
-hello world
+github instruction start develop a project:
+
+1. start a new project at (click the cat icon) https://github.com/
+-start a new prject: R projects
+-create repository 
+
+2. open cmd
+cd C:\Users\grace.fan\Documents\R\R scripts\new projects
+
+3. config
+i. under the above folder (the folder that you want to start a project)
+- git config --global user.name 'gracefan420'
+ii. 
+- git config --global user.email 'gracefan420@gmail.com'
+iii. (check config)
+- git config -l
+(see the last two rows for what we just config)
+iv. start a github project under the folder
+- git init
+v. connect bendi and github remote
+- git remote add origin http://github.com/R_Projects.git
+vi.
+some manipulation at this current folder
+create new folders/files/txt
+create files directly
+vii 
+-git status (check what happens at bendi)
+viii (take the bendi files to github)
+-git add *
+-git commit -m 'commnets any comments'
+-git push -u origin master
+
+f5 at the web
+
+
+
+
